@@ -87,14 +87,6 @@
   }
   @keyframes blink-slow { 0%,100%{opacity:0.75} 50%{opacity:0.25} }
 
-  /* ─── CANVAS ─────────────────────────────────────── */
-  #canvas-wrap {
-    position: fixed; inset: 0; z-index: 1;
-    opacity: 0; transition: opacity 1.5s ease;
-  }
-  #canvas-wrap.visible { opacity: 1; }
-  #three-canvas { width: 100%; height: 100%; display: block; }
-
   /* ─── MAIN CONTENT ───────────────────────────────── */
   #content {
     position: relative; z-index: 10;
@@ -174,7 +166,6 @@
     color: var(--gold); opacity: 0.6;
   }
 
-  /* ─── DIVIDER ─────────────────────────────────────── */
   .section-divider {
     display: flex; align-items: center; gap: 20px;
     padding: 0 40px; margin: 20px 0;
@@ -206,23 +197,60 @@
   }
   .section-title em { color: var(--gold); font-style: italic; }
 
-  /* ─── CHIVA SVG ILUSTRACIÓN ───────────────────────── */
+  .chiva-container {
+    cursor: pointer; /* Indica que es interactivo */
+    position: relative;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  
+  .chiva-interactive-hint {
+    font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--magenta); margin-top: -10px; margin-bottom: 20px;
+    animation: blink-slow 2s infinite;
+    background: rgba(224,21,107,0.1); padding: 6px 12px; border-radius: 20px;
+    border: 1px solid rgba(224,21,107,0.3);
+    transition: opacity 0.3s;
+  }
+
   .chiva-illustration {
     width: min(680px, 92vw);
-    margin: 48px 0 32px;
+    margin: 20px 0 32px;
     position: relative;
+    transition: transform 0.3s;
   }
   .chiva-svg-wrap {
     width: 100%; position: relative;
     filter: drop-shadow(0 0 40px rgba(201,168,76,0.25));
     animation: float-chiva 4s ease-in-out infinite;
   }
+  
+  /* ESTILOS "PARTY MODE" */
+  .chiva-container.party-mode .chiva-svg-wrap {
+    animation: float-chiva-party 0.4s ease-in-out infinite;
+  }
+  .chiva-container.party-mode .led-light {
+    animation-duration: 0.15s !important;
+  }
+  .chiva-container.party-mode .chiva-interactive-hint {
+    opacity: 0;
+  }
+
   @keyframes float-chiva {
     0%,100% { transform: translateY(0px); }
     50% { transform: translateY(-12px); }
   }
+  @keyframes float-chiva-party {
+    0%,100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-4px) rotate(-1deg); }
+    50% { transform: translateY(4px) rotate(0deg); }
+    75% { transform: translateY(-2px) rotate(1deg); }
+  }
+  @keyframes led {
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:0.3;transform:scale(0.7)}
+  }
 
-  /* ─── RUTA SECTION ────────────────────────────────── */
+  /* ─── RUTA SECTION (ACCORDION) ────────────────────── */
   .ruta-section {
     padding: 80px 24px 100px;
     max-width: 900px; margin: 0 auto;
@@ -238,7 +266,6 @@
   }
   .map-container iframe {
     width: 100%; height: 100%; border: none;
-    /* Filtro CSS para darle un aspecto nocturno/elegante al mapa */
     filter: invert(100%) hue-rotate(180deg) contrast(1.1) sepia(10%);
   }
   .map-overlay-badge {
@@ -256,19 +283,23 @@
   .ruta-stops::before {
     content: '';
     position: absolute; left: 28px; top: 20px; bottom: 20px; width: 1px;
-    background: linear-gradient(to bottom,
-      transparent, var(--gold) 15%, var(--gold) 85%, transparent);
+    background: linear-gradient(to bottom, transparent, var(--gold) 15%, var(--gold) 85%, transparent);
     opacity: 0.4;
   }
 
   .stop-item {
     display: flex; gap: 24px; align-items: flex-start;
-    padding: 28px 0;
-    opacity: 0;
-    transform: translateX(-20px);
+    padding: 20px 0;
+    opacity: 0; transform: translateX(-20px);
     transition: all 0.7s ease;
+    cursor: pointer; /* Interactivo */
   }
   .stop-item.visible { opacity: 1; transform: translateX(0); }
+  
+  .stop-item:hover .stop-number {
+    background: rgba(201,168,76,0.1);
+    transform: scale(1.05);
+  }
 
   .stop-number {
     width: 56px; height: 56px; min-width: 56px;
@@ -279,21 +310,48 @@
     font-size: 18px; color: var(--gold);
     background: var(--black-deep);
     position: relative; z-index: 2;
+    transition: all 0.3s;
   }
-  .stop-content { padding-top: 6px; }
+  .stop-content { 
+    padding-top: 6px; 
+    flex: 1;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    padding-bottom: 20px;
+  }
+  .stop-item:last-child .stop-content { border-bottom: none; }
+  
+  .stop-header {
+    display: flex; justify-content: space-between; align-items: center;
+  }
   .stop-name {
     font-family: 'DM Serif Display', serif;
-    font-size: 22px; margin-bottom: 6px;
-    color: var(--warm-white);
+    font-size: 22px; color: var(--warm-white);
+    transition: color 0.3s;
   }
+  .stop-item.active .stop-name { color: var(--gold-light); }
+  
+  .stop-toggle-icon {
+    color: var(--gold); font-size: 18px; transition: transform 0.4s ease;
+  }
+  .stop-item.active .stop-toggle-icon { transform: rotate(180deg); }
+
+  .stop-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.5s ease;
+    opacity: 0;
+  }
+  .stop-item.active .stop-body {
+    max-height: 150px; opacity: 1; margin-top: 12px;
+  }
+
   .stop-desc {
     font-size: 12px; line-height: 1.7;
     color: rgba(248,240,227,0.5); letter-spacing: 0.5px;
-    max-width: 420px;
   }
   .stop-time {
     font-size: 8px; letter-spacing: 4px; text-transform: uppercase;
-    color: var(--gold); margin-top: 8px;
+    color: var(--gold); margin-top: 12px; display: inline-block;
+    background: rgba(201,168,76,0.1); padding: 4px 8px;
   }
 
   /* ─── EVENTO INFO ─────────────────────────────────── */
@@ -313,33 +371,18 @@
     padding: 32px 28px;
     position: relative; overflow: hidden;
   }
-  .info-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(to right, transparent, var(--gold), transparent);
-    opacity: 0;
-    transition: opacity 0.4s;
-  }
-  .info-card:hover::before { opacity: 1; }
-
-  .info-icon {
-    font-size: 22px; margin-bottom: 14px; display: block;
-  }
+  .info-icon { font-size: 22px; margin-bottom: 14px; display: block; }
   .info-label {
     font-size: 8px; letter-spacing: 5px; text-transform: uppercase;
     color: rgba(201,168,76,0.6); margin-bottom: 8px;
   }
   .info-value {
     font-family: 'DM Serif Display', serif;
-    font-size: 20px; color: var(--warm-white);
-    line-height: 1.3;
+    font-size: 20px; color: var(--warm-white); line-height: 1.3;
   }
-  .info-sub {
-    font-size: 11px; color: rgba(248,240,227,0.4);
-    margin-top: 4px; letter-spacing: 0.5px;
-  }
+  .info-sub { font-size: 11px; color: rgba(248,240,227,0.4); margin-top: 4px; }
 
-  /* ─── INCLUYE SECTION ────────────────────────────── */
+  /* ─── INCLUYE SECTION (FLIP CARDS) ───────────────── */
   .incluye-section {
     padding: 80px 24px;
     max-width: 800px; margin: 0 auto;
@@ -349,20 +392,44 @@
     display: grid; grid-template-columns: repeat(4, 1fr);
     gap: 16px; margin-top: 48px;
   }
-  @media (max-width: 560px) { .incluye-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 768px) { .incluye-grid { grid-template-columns: repeat(2,1fr); } }
 
-  .incluye-item {
+  .flip-card {
+    background-color: transparent;
+    height: 160px;
+    perspective: 1000px; /* Perspectiva 3D */
+    cursor: pointer;
+  }
+  .flip-card-inner {
+    position: relative; width: 100%; height: 100%;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+  }
+  .flip-card.is-flipped .flip-card-inner {
+    transform: rotateY(180deg);
+  }
+  .flip-card-front, .flip-card-back {
+    position: absolute; width: 100%; height: 100%;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
     border: 1px solid rgba(201,168,76,0.15);
-    padding: 28px 16px;
-    display: flex; flex-direction: column; align-items: center; gap: 14px;
-    transition: all 0.4s ease;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px;
     background: rgba(201,168,76,0.02);
   }
-  .incluye-item:hover {
+  .flip-card-front {
+    gap: 14px;
+  }
+  .flip-card-front:hover {
     border-color: rgba(201,168,76,0.45);
     background: rgba(201,168,76,0.07);
-    transform: translateY(-4px);
   }
+  .flip-card-back {
+    background: rgba(201,168,76,0.08);
+    transform: rotateY(180deg);
+    border-color: rgba(201,168,76,0.5);
+  }
+  
   .incluye-icon {
     width: 48px; height: 48px;
     display: flex; align-items: center; justify-content: center;
@@ -371,18 +438,28 @@
     font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
     color: rgba(248,240,227,0.65);
   }
+  .incluye-desc-back {
+    font-size: 11px; line-height: 1.5; color: var(--warm-white);
+  }
 
-  /* ─── PAGO SECTION ───────────────────────────────── */
+  /* ─── PAGO SECTION (3D TILT TICKET) ──────────────── */
   .pago-section {
     padding: 80px 24px;
     display: flex; flex-direction: column; align-items: center;
   }
-  .pago-card {
+  .pago-card-wrapper {
+    perspective: 1000px;
     width: min(440px, 92vw);
+  }
+  .pago-card {
+    width: 100%;
     border: 1px solid rgba(201,168,76,0.25);
     padding: 48px;
     position: relative; overflow: hidden;
     background: rgba(6,6,6,0.8);
+    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+    transform-style: preserve-3d;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   }
   .pago-card::after {
     content: '';
@@ -390,6 +467,10 @@
     background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.06), transparent 70%);
     pointer-events: none;
   }
+  
+  /* Elementos internos para efecto parallax en la tarjeta */
+  .pago-content-3d { transform: translateZ(30px); }
+  
   .pago-amount {
     font-family: 'DM Serif Display', serif;
     font-size: 64px; color: var(--gold);
@@ -445,21 +526,17 @@
   .libro-quote {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(18px, 4vw, 24px);
-    font-style: italic; line-height: 1.6;
-    color: var(--warm-white);
+    font-style: italic; line-height: 1.6; color: var(--warm-white);
   }
   .libro-chapter {
     margin-top: 16px;
-    font-size: 9px; letter-spacing: 5px; text-transform: uppercase;
-    color: var(--magenta);
+    font-size: 9px; letter-spacing: 5px; text-transform: uppercase; color: var(--magenta);
   }
   .libro-hidden {
-    max-height: 0; opacity: 0; overflow: hidden;
-    transition: all 0.8s ease;
+    max-height: 0; opacity: 0; overflow: hidden; transition: all 0.8s ease;
   }
   .libro-hidden p {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16px; font-style: italic;
+    font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic;
     color: rgba(248,240,227,0.6); line-height: 1.7;
   }
   .libro-tap {
@@ -470,150 +547,68 @@
 
   /* ─── QR / NFC SECTION ───────────────────────────── */
   .qr-section {
-    padding: 80px 24px;
-    display: flex; flex-direction: column; align-items: center; gap: 48px;
+    padding: 80px 24px; display: flex; flex-direction: column; align-items: center; gap: 48px;
   }
-  .qr-nfc-grid {
-    display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;
-  }
+  .qr-nfc-grid { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
   .qr-card, .nfc-card {
-    width: min(320px, 92vw);
-    border: 1px solid rgba(201,168,76,0.2);
-    padding: 40px 32px;
-    text-align: center;
-    background: rgba(6,6,6,0.8);
-    position: relative;
+    width: min(320px, 92vw); border: 1px solid rgba(201,168,76,0.2);
+    padding: 40px 32px; text-align: center; background: rgba(6,6,6,0.8); position: relative;
   }
   .qr-box {
-    width: 160px; height: 160px;
-    margin: 0 auto 24px;
-    border: 1px solid rgba(201,168,76,0.4);
-    padding: 12px;
-    position: relative;
+    width: 160px; height: 160px; margin: 0 auto 24px;
+    border: 1px solid rgba(201,168,76,0.4); padding: 12px; position: relative;
   }
   .qr-box::before, .qr-box::after {
-    content: '';
-    position: absolute;
-    width: 16px; height: 16px;
-    border-color: var(--gold); border-style: solid;
+    content: ''; position: absolute; width: 16px; height: 16px; border-color: var(--gold); border-style: solid;
   }
   .qr-box::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
   .qr-box::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
-  .qr-inner {
-    width: 100%; height: 100%;
-    background: var(--warm-white);
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
-  }
-  .qr-inner svg { width: 100%; height: 100%; }
-
+  .qr-inner { width: 100%; height: 100%; background: var(--warm-white); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  
   .nfc-wave {
-    width: 80px; height: 80px;
-    margin: 0 auto 24px;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
+    width: 80px; height: 80px; margin: 0 auto 24px;
+    display: flex; align-items: center; justify-content: center; position: relative;
   }
   .nfc-wave::before, .nfc-wave::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid rgba(224,21,107,0.4);
+    content: ''; position: absolute; border-radius: 50%; border: 1px solid rgba(224,21,107,0.4);
     animation: nfc-pulse 2s ease-in-out infinite;
   }
-  .nfc-wave::before { inset: 0; }
-  .nfc-wave::after  { inset: -16px; animation-delay: 0.4s; }
-  @keyframes nfc-pulse {
-    0%,100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.08); opacity: 0.2; }
-  }
+  .nfc-wave::before { inset: 0; } .nfc-wave::after  { inset: -16px; animation-delay: 0.4s; }
+  @keyframes nfc-pulse { 0%,100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.08); opacity: 0.2; } }
   .nfc-center {
-    width: 48px; height: 48px;
-    border-radius: 50%;
-    background: rgba(224,21,107,0.12);
-    border: 1px solid rgba(224,21,107,0.35);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    position: relative; z-index: 2;
+    width: 48px; height: 48px; border-radius: 50%; background: rgba(224,21,107,0.12);
+    border: 1px solid rgba(224,21,107,0.35); display: flex; align-items: center; justify-content: center;
+    font-size: 22px; position: relative; z-index: 2;
   }
-
-  .card-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 20px; margin-bottom: 8px;
-  }
-  .card-desc {
-    font-size: 11px; color: rgba(248,240,227,0.45);
-    line-height: 1.7; letter-spacing: 0.5px;
-  }
+  .card-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 8px; }
+  .card-desc { font-size: 11px; color: rgba(248,240,227,0.45); line-height: 1.7; letter-spacing: 0.5px; }
 
   /* ─── COUNTDOWN ───────────────────────────────────── */
-  .countdown-section {
-    padding: 60px 24px;
-    display: flex; flex-direction: column; align-items: center;
-  }
-  .countdown-grid {
-    display: flex; gap: 24px; margin-top: 40px;
-    flex-wrap: wrap; justify-content: center;
-  }
-  .cd-item {
-    text-align: center;
-    min-width: 80px;
-  }
+  .countdown-section { padding: 60px 24px; display: flex; flex-direction: column; align-items: center; }
+  .countdown-grid { display: flex; gap: 24px; margin-top: 40px; flex-wrap: wrap; justify-content: center; }
+  .cd-item { text-align: center; min-width: 80px; }
   .cd-number {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(40px, 9vw, 72px);
-    color: var(--gold); line-height: 1;
-    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+    font-family: 'DM Serif Display', serif; font-size: clamp(40px, 9vw, 72px);
+    color: var(--gold); line-height: 1; text-shadow: 0 0 30px rgba(201,168,76,0.4);
   }
-  .cd-label {
-    font-size: 8px; letter-spacing: 4px; text-transform: uppercase;
-    color: rgba(248,240,227,0.35); margin-top: 8px;
-  }
-  .cd-sep {
-    font-family: 'DM Serif Display', serif;
-    font-size: 40px; color: rgba(201,168,76,0.3);
-    align-self: flex-start; padding-top: 4px;
-  }
+  .cd-label { font-size: 8px; letter-spacing: 4px; text-transform: uppercase; color: rgba(248,240,227,0.35); margin-top: 8px; }
+  .cd-sep { font-family: 'DM Serif Display', serif; font-size: 40px; color: rgba(201,168,76,0.3); align-self: flex-start; padding-top: 4px; }
 
   /* ─── CTA FINAL ───────────────────────────────────── */
-  .cta-section {
-    padding: 100px 24px 120px;
-    text-align: center;
-    position: relative;
-  }
-  .cta-pre {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(18px, 4vw, 28px);
-    font-style: italic;
-    color: rgba(248,240,227,0.6); margin-bottom: 12px;
-  }
-  .cta-main {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(40px, 10vw, 96px);
-    line-height: 0.95; color: var(--warm-white);
-    margin-bottom: 48px;
-  }
+  .cta-section { padding: 100px 24px 120px; text-align: center; position: relative; }
+  .cta-pre { font-family: 'Cormorant Garamond', serif; font-size: clamp(18px, 4vw, 28px); font-style: italic; color: rgba(248,240,227,0.6); margin-bottom: 12px; }
+  .cta-main { font-family: 'DM Serif Display', serif; font-size: clamp(40px, 10vw, 96px); line-height: 0.95; color: var(--warm-white); margin-bottom: 48px; }
   .cta-main em { color: var(--gold); font-style: italic; }
 
   .btn-cta {
-    display: inline-flex; align-items: center; gap: 16px;
-    border: 1px solid var(--gold);
-    padding: 20px 48px;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 10px; letter-spacing: 5px; text-transform: uppercase;
-    color: var(--gold);
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.4s ease;
-    text-decoration: none;
-    position: relative; overflow: hidden;
+    display: inline-flex; align-items: center; gap: 16px; border: 1px solid var(--gold);
+    padding: 20px 48px; font-family: 'Montserrat', sans-serif; font-size: 10px; letter-spacing: 5px;
+    text-transform: uppercase; color: var(--gold); background: transparent; cursor: pointer;
+    transition: all 0.4s ease; text-decoration: none; position: relative; overflow: hidden;
   }
   .btn-cta::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: var(--gold);
-    transform: translateX(-100%);
-    transition: transform 0.4s ease;
-    z-index: 0;
+    content: ''; position: absolute; inset: 0; background: var(--gold); transform: translateX(-100%);
+    transition: transform 0.4s ease; z-index: 0;
   }
   .btn-cta:hover::before { transform: translateX(0); }
   .btn-cta:hover { color: var(--black); }
@@ -621,86 +616,34 @@
 
   /* ─── MODAL RSVP ──────────────────────────────────── */
   #rsvp-modal {
-    position: fixed; inset: 0; z-index: 500;
-    background: rgba(4,4,4,0.95);
-    display: flex; align-items: center; justify-content: center;
-    padding: 24px;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.5s ease;
+    position: fixed; inset: 0; z-index: 500; background: rgba(4,4,4,0.95);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
   }
   #rsvp-modal.open { opacity: 1; pointer-events: all; }
-  .modal-inner {
-    width: min(480px, 100%);
-    border: 1px solid rgba(201,168,76,0.25);
-    padding: 48px 40px;
-    background: #060606;
-    position: relative;
-  }
-  .modal-close {
-    position: absolute; top: 20px; right: 24px;
-    background: none; border: none; color: rgba(248,240,227,0.4);
-    font-size: 20px; cursor: pointer;
-  }
-  .modal-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 32px; color: var(--warm-white); margin-bottom: 8px;
-  }
-  .modal-sub {
-    font-size: 10px; letter-spacing: 3px;
-    color: rgba(248,240,227,0.35); text-transform: uppercase;
-    margin-bottom: 36px;
-  }
+  .modal-inner { width: min(480px, 100%); border: 1px solid rgba(201,168,76,0.25); padding: 48px 40px; background: #060606; position: relative; }
+  .modal-close { position: absolute; top: 20px; right: 24px; background: none; border: none; color: rgba(248,240,227,0.4); font-size: 20px; cursor: pointer; }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--warm-white); margin-bottom: 8px; }
+  .modal-sub { font-size: 10px; letter-spacing: 3px; color: rgba(248,240,227,0.35); text-transform: uppercase; margin-bottom: 36px; }
   .form-group { margin-bottom: 20px; }
-  .form-label {
-    font-size: 8px; letter-spacing: 4px; text-transform: uppercase;
-    color: rgba(201,168,76,0.7); display: block; margin-bottom: 8px;
-  }
+  .form-label { font-size: 8px; letter-spacing: 4px; text-transform: uppercase; color: rgba(201,168,76,0.7); display: block; margin-bottom: 8px; }
   .form-input {
-    width: 100%;
-    background: rgba(201,168,76,0.04);
-    border: 1px solid rgba(201,168,76,0.2);
-    padding: 14px 16px;
-    color: var(--warm-white);
-    font-family: 'Montserrat', sans-serif;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.3s;
+    width: 100%; background: rgba(201,168,76,0.04); border: 1px solid rgba(201,168,76,0.2);
+    padding: 14px 16px; color: var(--warm-white); font-family: 'Montserrat', sans-serif; font-size: 13px; outline: none; transition: border-color 0.3s;
   }
   .form-input:focus { border-color: rgba(201,168,76,0.6); }
   .form-input::placeholder { color: rgba(248,240,227,0.2); }
   .btn-submit {
-    width: 100%; margin-top: 8px;
-    background: var(--gold);
-    border: none; padding: 16px;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 9px; letter-spacing: 5px; text-transform: uppercase;
-    color: var(--black);
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: 600;
+    width: 100%; margin-top: 8px; background: var(--gold); border: none; padding: 16px; font-family: 'Montserrat', sans-serif;
+    font-size: 9px; letter-spacing: 5px; text-transform: uppercase; color: var(--black); cursor: pointer; transition: all 0.3s; font-weight: 600;
   }
   .btn-submit:hover { background: var(--gold-light); }
 
-  /* ─── FOOTER ─────────────────────────────────────── */
-  footer {
-    padding: 40px 24px;
-    text-align: center; border-top: 1px solid rgba(201,168,76,0.08);
-  }
-  .footer-mark {
-    font-family: 'DM Serif Display', serif;
-    font-size: 14px; color: rgba(201,168,76,0.4);
-    letter-spacing: 2px;
-  }
-  .footer-copy {
-    font-size: 9px; letter-spacing: 2px;
-    color: rgba(248,240,227,0.15); margin-top: 8px;
-  }
+  footer { padding: 40px 24px; text-align: center; border-top: 1px solid rgba(201,168,76,0.08); }
+  .footer-mark { font-family: 'DM Serif Display', serif; font-size: 14px; color: rgba(201,168,76,0.4); letter-spacing: 2px; }
+  .footer-copy { font-size: 9px; letter-spacing: 2px; color: rgba(248,240,227,0.15); margin-top: 8px; }
 
-  /* ─── PARTICLES CANVAS ────────────────────────────── */
-  #particles {
-    position: fixed; inset: 0; z-index: 0;
-    pointer-events: none;
-  }
+  #particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -751,245 +694,275 @@
       Una chiva colombiana rediseñada para una noche de lujo. Colores vivos, luces neón y la energía de Bogotá a media noche.
     </div>
 
-    <!-- CHIVA SVG ILUSTRACIÓN PREMIUM -->
-    <div class="chiva-illustration">
-      <div class="chiva-svg-wrap">
-        <svg viewBox="0 0 680 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
-          <defs>
-            <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style="stop-color:#1a0a2e"/>
-              <stop offset="100%" style="stop-color:#0d0618"/>
-            </linearGradient>
-            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#E8C97A"/>
-              <stop offset="100%" style="stop-color:#C9A84C"/>
-            </linearGradient>
-            <linearGradient id="roofGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style="stop-color:#2d0a1a"/>
-              <stop offset="100%" style="stop-color:#1a0010"/>
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <filter id="glow-gold">
-              <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
-              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <radialGradient id="headlight" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" style="stop-color:#FFF8DC;stop-opacity:1"/>
-              <stop offset="60%" style="stop-color:#F5C842;stop-opacity:0.6"/>
-              <stop offset="100%" style="stop-color:transparent;stop-opacity:0"/>
-            </radialGradient>
-          </defs>
+    <!-- CONTENEDOR CHIVA INTERACTIVO -->
+    <div class="chiva-container" id="interactive-chiva" style="margin-top: 48px;">
+      <div class="chiva-interactive-hint">✦ Toca la chiva para encender la rumba ✦</div>
+      
+      <!-- CHIVA SVG ILUSTRACIÓN PREMIUM -->
+      <div class="chiva-illustration">
+        <div class="chiva-svg-wrap">
+          <svg viewBox="0 0 680 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+            <defs>
+              <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#1a0a2e"/>
+                <stop offset="100%" style="stop-color:#0d0618"/>
+              </linearGradient>
+              <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#E8C97A"/>
+                <stop offset="100%" style="stop-color:#C9A84C"/>
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="glow-gold">
+                <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <radialGradient id="headlight" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" style="stop-color:#FFF8DC;stop-opacity:1"/>
+                <stop offset="60%" style="stop-color:#F5C842;stop-opacity:0.6"/>
+                <stop offset="100%" style="stop-color:transparent;stop-opacity:0"/>
+              </radialGradient>
+            </defs>
 
-          <!-- SOMBRA BASE -->
-          <ellipse cx="340" cy="295" rx="280" ry="14" fill="rgba(0,0,0,0.5)"/>
+            <!-- SOMBRA BASE -->
+            <ellipse cx="340" cy="295" rx="280" ry="14" fill="rgba(0,0,0,0.5)"/>
 
-          <!-- BODY PRINCIPAL -->
-          <rect x="60" y="120" width="540" height="145" rx="8" fill="url(#bodyGrad)" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
+            <!-- ESCALERA TRASERA -->
+            <line x1="35" y1="60" x2="35" y2="240" stroke="url(#goldGrad)" stroke-width="4"/>
+            <line x1="55" y1="60" x2="55" y2="240" stroke="url(#goldGrad)" stroke-width="4"/>
+            <!-- Escalones -->
+            <line x1="35" y1="80" x2="55" y2="80" stroke="url(#goldGrad)" stroke-width="3"/>
+            <line x1="35" y1="105" x2="55" y2="105" stroke="url(#goldGrad)" stroke-width="3"/>
+            <line x1="35" y1="130" x2="55" y2="130" stroke="url(#goldGrad)" stroke-width="3"/>
+            <line x1="35" y1="155" x2="55" y2="155" stroke="url(#goldGrad)" stroke-width="3"/>
+            <line x1="35" y1="180" x2="55" y2="180" stroke="url(#goldGrad)" stroke-width="3"/>
+            <line x1="35" y1="205" x2="55" y2="205" stroke="url(#goldGrad)" stroke-width="3"/>
+            <line x1="35" y1="230" x2="55" y2="230" stroke="url(#goldGrad)" stroke-width="3"/>
 
-          <!-- TECHO/CAPOTA -->
-          <path d="M120 120 Q140 60 200 55 L500 55 Q540 58 560 120 Z" fill="url(#roofGrad)" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+            <!-- CHASSIS BASE -->
+            <rect x="60" y="240" width="560" height="12" fill="url(#goldGrad)"/>
+            <line x1="60" y1="246" x2="620" y2="246" stroke="#E0156B" stroke-width="2" filter="url(#glow)"/>
 
-          <!-- TECHO SEGUNDA CAPA (franja dorada) -->
-          <path d="M140 120 Q158 75 205 70 L490 70 Q530 73 545 120 Z" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" opacity="0.6"/>
+            <!-- CABINA DE PASAJEROS (Fondo oscuro) -->
+            <rect x="60" y="110" width="380" height="130" fill="#0a0412" stroke="url(#goldGrad)" stroke-width="2"/>
 
-          <!-- FRANJAS LATERALES DECORATIVAS (identidad chiva) -->
-          <rect x="60" y="128" width="540" height="6" fill="url(#goldGrad)" opacity="0.8"/>
-          <rect x="60" y="138" width="540" height="3" fill="#E0156B" opacity="0.9" filter="url(#glow)"/>
-          <rect x="60" y="144" width="540" height="6" fill="url(#goldGrad)" opacity="0.7"/>
+            <!-- SILLAS (Bancas de madera) -->
+            <line x1="60" y1="170" x2="440" y2="170" stroke="rgba(201,168,76,0.4)" stroke-width="3"/>
+            <line x1="60" y1="185" x2="440" y2="185" stroke="rgba(201,168,76,0.4)" stroke-width="3"/>
 
-          <rect x="60" y="240" width="540" height="4" fill="#E0156B" opacity="0.8" filter="url(#glow)"/>
-          <rect x="60" y="247" width="540" height="6" fill="url(#goldGrad)" opacity="0.7"/>
-          <rect x="60" y="256" width="540" height="3" fill="#E0156B" opacity="0.7" filter="url(#glow)"/>
+            <!-- PILARES Y CARPAS (Aberturas típicas) -->
+            <!-- Carpas enrolladas arriba -->
+            <path d="M 70 115 Q 98 135 126 115" fill="none" stroke="#E0156B" stroke-width="5" filter="url(#glow)"/>
+            <path d="M 146 115 Q 174 135 202 115" fill="none" stroke="#E0156B" stroke-width="5" filter="url(#glow)"/>
+            <path d="M 222 115 Q 250 135 278 115" fill="none" stroke="#E0156B" stroke-width="5" filter="url(#glow)"/>
+            <path d="M 298 115 Q 326 135 354 115" fill="none" stroke="#E0156B" stroke-width="5" filter="url(#glow)"/>
+            <path d="M 374 115 Q 402 135 430 115" fill="none" stroke="#E0156B" stroke-width="5" filter="url(#glow)"/>
 
-          <!-- VENTANAS PASAJEROS (filas) -->
-          <!-- Fila 1 -->
-          <rect x="160" y="75" width="55" height="38" rx="3" fill="rgba(100,180,255,0.15)" stroke="rgba(201,168,76,0.5)" stroke-width="1"/>
-          <rect x="225" y="75" width="55" height="38" rx="3" fill="rgba(100,180,255,0.15)" stroke="rgba(201,168,76,0.5)" stroke-width="1"/>
-          <rect x="290" y="75" width="55" height="38" rx="3" fill="rgba(100,180,255,0.12)" stroke="rgba(201,168,76,0.5)" stroke-width="1"/>
-          <rect x="355" y="75" width="55" height="38" rx="3" fill="rgba(100,180,255,0.15)" stroke="rgba(201,168,76,0.5)" stroke-width="1"/>
-          <rect x="420" y="75" width="55" height="38" rx="3" fill="rgba(100,180,255,0.12)" stroke="rgba(201,168,76,0.5)" stroke-width="1"/>
+            <!-- Pilares divisorios -->
+            <rect x="60" y="110" width="10" height="130" fill="url(#bodyGrad)" stroke="url(#goldGrad)" stroke-width="1"/>
+            <rect x="136" y="110" width="10" height="130" fill="url(#bodyGrad)" stroke="url(#goldGrad)" stroke-width="1"/>
+            <rect x="212" y="110" width="10" height="130" fill="url(#bodyGrad)" stroke="url(#goldGrad)" stroke-width="1"/>
+            <rect x="288" y="110" width="10" height="130" fill="url(#bodyGrad)" stroke="url(#goldGrad)" stroke-width="1"/>
+            <rect x="364" y="110" width="10" height="130" fill="url(#bodyGrad)" stroke="url(#goldGrad)" stroke-width="1"/>
+            <rect x="430" y="110" width="10" height="130" fill="url(#bodyGrad)" stroke="url(#goldGrad)" stroke-width="1"/>
 
-          <!-- Luz interior ventanas -->
-          <rect x="162" y="77" width="51" height="34" rx="2" fill="rgba(255,220,100,0.08)"/>
-          <rect x="357" y="77" width="51" height="34" rx="2" fill="rgba(255,220,100,0.08)"/>
+            <!-- TABLERO LATERAL DECORATIVO -->
+            <rect x="60" y="200" width="380" height="40" fill="#0d0618" stroke="url(#goldGrad)" stroke-width="2"/>
+            <line x1="60" y1="206" x2="440" y2="206" stroke="#E0156B" stroke-width="2" filter="url(#glow)"/>
+            <line x1="60" y1="234" x2="440" y2="234" stroke="#E0156B" stroke-width="2" filter="url(#glow)"/>
 
-          <!-- VENTANAS LATERALES CUERPO -->
-          <rect x="100" y="158" width="60" height="50" rx="3" fill="rgba(100,180,255,0.08)" stroke="rgba(201,168,76,0.35)" stroke-width="1"/>
-          <rect x="175" y="158" width="60" height="50" rx="3" fill="rgba(100,180,255,0.08)" stroke="rgba(201,168,76,0.35)" stroke-width="1"/>
-          <rect x="250" y="158" width="60" height="50" rx="3" fill="rgba(100,180,255,0.08)" stroke="rgba(201,168,76,0.35)" stroke-width="1"/>
-          <rect x="325" y="158" width="60" height="50" rx="3" fill="rgba(100,180,255,0.08)" stroke="rgba(201,168,76,0.35)" stroke-width="1"/>
-          <rect x="400" y="158" width="60" height="50" rx="3" fill="rgba(100,180,255,0.08)" stroke="rgba(201,168,76,0.35)" stroke-width="1"/>
-          <rect x="475" y="158" width="80" height="50" rx="3" fill="rgba(100,180,255,0.08)" stroke="rgba(201,168,76,0.35)" stroke-width="1"/>
+            <!-- Ornamentos del tablero -->
+            <polygon points="80,210 95,220 80,230" fill="url(#goldGrad)"/>
+            <polygon points="100,210 115,220 100,230" fill="rgba(224,21,107,0.8)"/>
+            <polygon points="120,210 135,220 120,230" fill="url(#goldGrad)"/>
+            <polygon points="420,210 405,220 420,230" fill="url(#goldGrad)"/>
+            <polygon points="400,210 385,220 400,230" fill="rgba(224,21,107,0.8)"/>
+            <polygon points="380,210 365,220 380,230" fill="url(#goldGrad)"/>
 
-          <!-- ORNAMENTOS COLOMBIANOS (flores estilizadas) -->
-          <circle cx="140" cy="200" r="10" fill="none" stroke="rgba(224,21,107,0.4)" stroke-width="1"/>
-          <circle cx="140" cy="200" r="4" fill="rgba(224,21,107,0.3)"/>
-          <circle cx="560" cy="200" r="10" fill="none" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
-          <circle cx="560" cy="200" r="4" fill="rgba(201,168,76,0.3)"/>
+            <!-- Placa NAT 24 -->
+            <rect x="180" y="205" width="140" height="30" rx="4" fill="#1a0a2e" stroke="url(#goldGrad)" stroke-width="2"/>
+            <text x="250" y="227" text-anchor="middle" font-family="serif" font-size="22" font-weight="bold" fill="url(#goldGrad)" filter="url(#glow-gold)" letter-spacing="6">NAT 24</text>
 
-          <!-- LETRAS "NAT 24" EN LA CHIVA -->
-          <text x="340" y="215" text-anchor="middle" font-family="serif" font-size="26" font-weight="bold" fill="url(#goldGrad)" filter="url(#glow-gold)" letter-spacing="8">NAT 24</text>
+            <!-- CABINA DEL CONDUCTOR (TROMPA CLÁSICA) -->
+            <path d="M 440 110 L 510 110 L 530 160 L 530 240 L 440 240 Z" fill="url(#bodyGrad)" stroke="url(#goldGrad)" stroke-width="2"/>
+            <!-- Ventana Conductor -->
+            <polygon points="450,120 500,120 515,155 450,155" fill="rgba(100,180,255,0.15)" stroke="url(#goldGrad)" stroke-width="1.5"/>
+            <!-- Capó del motor -->
+            <path d="M 530 160 L 610 170 L 610 240 L 530 240 Z" fill="url(#bodyGrad)" stroke="url(#goldGrad)" stroke-width="2"/>
 
-          <!-- LUCES LED NEÓN LATERALES (animadas via CSS) -->
-          <line x1="62" y1="265" x2="618" y2="265" stroke="#E0156B" stroke-width="2.5" opacity="0.9" filter="url(#glow)" stroke-dasharray="8,4"/>
-          <line x1="62" y1="272" x2="618" y2="272" stroke="#C9A84C" stroke-width="1.5" opacity="0.7" filter="url(#glow-gold)" stroke-dasharray="12,6"/>
+            <!-- Parrilla frontal motor -->
+            <rect x="595" y="180" width="15" height="50" rx="3" fill="rgba(201,168,76,0.1)" stroke="url(#goldGrad)" stroke-width="2"/>
+            <line x1="602" y1="182" x2="602" y2="228" stroke="url(#goldGrad)" stroke-width="2"/>
 
-          <!-- CABINA CONDUCTOR -->
-          <rect x="560" y="100" width="80" height="165" rx="6" fill="url(#bodyGrad)" stroke="rgba(201,168,76,0.35)" stroke-width="1"/>
-          <rect x="565" y="115" width="68" height="45" rx="3" fill="rgba(100,180,255,0.15)" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
-          <!-- Parabrisas reflejo -->
-          <line x1="572" y1="118" x2="580" y2="155" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
+            <!-- GUARDABARROS (Fenders) -->
+            <path d="M 90 240 A 60 60 0 0 1 210 240" fill="#060606" stroke="#E0156B" stroke-width="5" filter="url(#glow)"/>
+            <path d="M 480 240 A 60 60 0 0 1 600 240" fill="#060606" stroke="#E0156B" stroke-width="5" filter="url(#glow)"/>
 
-          <!-- FARO DELANTERO con halo -->
-          <ellipse cx="640" cy="230" rx="20" ry="16" fill="url(#headlight)" opacity="0.9"/>
-          <ellipse cx="640" cy="230" rx="14" ry="11" fill="#FFF8DC" opacity="0.7"/>
-          <ellipse cx="640" cy="225" rx="18" ry="12" fill="none" stroke="rgba(201,168,76,0.5)" stroke-width="1"/>
-          <!-- Halo exterior faro -->
-          <ellipse cx="640" cy="230" rx="30" ry="24" fill="rgba(255,240,100,0.06)" filter="url(#glow-gold)"/>
+            <!-- RUEDAS -->
+            <!-- Rueda Trasera -->
+            <circle cx="150" cy="260" r="36" fill="#0e0e0e" stroke="url(#goldGrad)" stroke-width="3"/>
+            <circle cx="150" cy="260" r="22" fill="none" stroke="rgba(201,168,76,0.5)" stroke-width="2"/>
+            <circle cx="150" cy="260" r="10" fill="url(#goldGrad)"/>
+            <path d="M 126 260 L 174 260 M 150 236 L 150 284 M 133 243 L 167 277 M 133 277 L 167 243" stroke="rgba(201,168,76,0.5)" stroke-width="2"/>
 
-          <!-- PARRILLA FRONTAL -->
-          <rect x="600" y="215" width="42" height="30" rx="3" fill="rgba(201,168,76,0.1)" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
-          <line x1="612" y1="215" x2="612" y2="245" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
-          <line x1="624" y1="215" x2="624" y2="245" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
-          <line x1="636" y1="215" x2="636" y2="245" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
-          <line x1="600" y1="227" x2="642" y2="227" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
-          <line x1="600" y1="235" x2="642" y2="235" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
+            <!-- Rueda Delantera -->
+            <circle cx="540" cy="260" r="36" fill="#0e0e0e" stroke="url(#goldGrad)" stroke-width="3"/>
+            <circle cx="540" cy="260" r="22" fill="none" stroke="rgba(201,168,76,0.5)" stroke-width="2"/>
+            <circle cx="540" cy="260" r="10" fill="url(#goldGrad)"/>
+            <path d="M 516 260 L 564 260 M 540 236 L 540 284 M 523 243 L 557 277 M 523 277 L 557 243" stroke="rgba(201,168,76,0.5)" stroke-width="2"/>
 
-          <!-- RUEDAS -->
-          <!-- Rueda trasera izq -->
-          <circle cx="150" cy="278" r="36" fill="#0e0e0e" stroke="rgba(201,168,76,0.4)" stroke-width="2"/>
-          <circle cx="150" cy="278" r="24" fill="none" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
-          <circle cx="150" cy="278" r="12" fill="rgba(201,168,76,0.15)" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <!-- Rayos -->
-          <line x1="150" y1="254" x2="150" y2="264" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="150" y1="292" x2="150" y2="302" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="126" y1="278" x2="136" y2="278" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="164" y1="278" x2="174" y2="278" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="133" y1="261" x2="140" y2="268" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="160" y1="288" x2="167" y2="295" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="167" y1="261" x2="160" y2="268" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="133" y1="295" x2="140" y2="288" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
+            <!-- FARO DELANTERO -->
+            <ellipse cx="610" cy="205" rx="10" ry="16" fill="url(#headlight)"/>
+            <ellipse cx="610" cy="205" rx="6" ry="10" fill="#FFF8DC"/>
+            <ellipse cx="630" cy="205" rx="35" ry="25" fill="rgba(255,240,100,0.15)" filter="url(#glow-gold)"/>
 
-          <!-- Rueda trasera der -->
-          <circle cx="450" cy="278" r="36" fill="#0e0e0e" stroke="rgba(201,168,76,0.4)" stroke-width="2"/>
-          <circle cx="450" cy="278" r="24" fill="none" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
-          <circle cx="450" cy="278" r="12" fill="rgba(201,168,76,0.15)" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="450" y1="254" x2="450" y2="264" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="450" y1="292" x2="450" y2="302" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="426" y1="278" x2="436" y2="278" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="464" y1="278" x2="474" y2="278" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
+            <!-- LA PARRILLA (Techo portaequipaje) -->
+            <rect x="50" y="100" width="410" height="10" rx="3" fill="#1a0a2e" stroke="url(#goldGrad)" stroke-width="2"/>
+            <path d="M 55 80 L 445 80" stroke="url(#goldGrad)" stroke-width="3"/>
+            <line x1="60" y1="80" x2="60" y2="100" stroke="url(#goldGrad)" stroke-width="2"/>
+            <line x1="120" y1="80" x2="120" y2="100" stroke="url(#goldGrad)" stroke-width="2"/>
+            <line x1="180" y1="80" x2="180" y2="100" stroke="url(#goldGrad)" stroke-width="2"/>
+            <line x1="240" y1="80" x2="240" y2="100" stroke="url(#goldGrad)" stroke-width="2"/>
+            <line x1="300" y1="80" x2="300" y2="100" stroke="url(#goldGrad)" stroke-width="2"/>
+            <line x1="360" y1="80" x2="360" y2="100" stroke="url(#goldGrad)" stroke-width="2"/>
+            <line x1="420" y1="80" x2="420" y2="100" stroke="url(#goldGrad)" stroke-width="2"/>
 
-          <!-- Rueda delantera (cabina) -->
-          <circle cx="610" cy="278" r="32" fill="#0e0e0e" stroke="rgba(201,168,76,0.4)" stroke-width="2"/>
-          <circle cx="610" cy="278" r="20" fill="none" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
-          <circle cx="610" cy="278" r="10" fill="rgba(201,168,76,0.15)" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="610" y1="258" x2="610" y2="266" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="610" y1="290" x2="610" y2="298" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="590" y1="278" x2="598" y2="278" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
-          <line x1="622" y1="278" x2="630" y2="278" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
+            <!-- EQUIPAJE EN PARRILLA -->
+            <rect x="80" y="70" width="30" height="30" rx="4" fill="rgba(224,21,107,0.3)" stroke="#E0156B" stroke-width="2" filter="url(#glow)"/>
+            <circle cx="150" cy="85" r="14" fill="#0e0e0e" stroke="url(#goldGrad)" stroke-width="3"/>
+            <path d="M 180 100 L 195 60 L 220 100 Z" fill="rgba(201,168,76,0.3)" stroke="#C9A84C" stroke-width="2"/>
+            <rect x="240" y="75" width="40" height="25" rx="3" fill="rgba(100,180,255,0.2)" stroke="#64b4ff" stroke-width="2" filter="url(#glow)"/>
+            <!-- El Picó (Parlante) -->
+            <rect x="310" y="50" width="45" height="50" rx="3" fill="#0d0618" stroke="url(#goldGrad)" stroke-width="2"/>
+            <circle cx="332.5" cy="70" r="14" fill="#E0156B" filter="url(#glow)"/>
+            <circle cx="332.5" cy="90" r="6" fill="url(#goldGrad)"/>
+            <!-- Carpa envuelta -->
+            <path d="M 380 100 Q 400 70 430 100" fill="none" stroke="#E0156B" stroke-width="4" filter="url(#glow)"/>
 
-          <!-- DECORACIONES TECHO (flores colombianas) -->
-          <circle cx="220" cy="57" r="5" fill="rgba(224,21,107,0.5)" filter="url(#glow)"/>
-          <circle cx="280" cy="57" r="3" fill="rgba(201,168,76,0.6)"/>
-          <circle cx="340" cy="55" r="6" fill="rgba(224,21,107,0.6)" filter="url(#glow)"/>
-          <circle cx="400" cy="57" r="3" fill="rgba(201,168,76,0.6)"/>
-          <circle cx="460" cy="57" r="5" fill="rgba(224,21,107,0.5)" filter="url(#glow)"/>
+            <!-- BANDERINES DE FIESTA -->
+            <polygon points="70,80 80,65 90,80" fill="#E0156B"/>
+            <polygon points="100,80 110,65 120,80" fill="#C9A84C"/>
+            <polygon points="130,80 140,65 150,80" fill="#E0156B"/>
+            <polygon points="160,80 170,65 180,80" fill="#C9A84C"/>
+            <polygon points="190,80 200,65 210,80" fill="#E0156B"/>
+            <polygon points="220,80 230,65 240,80" fill="#C9A84C"/>
+            <polygon points="250,80 260,65 270,80" fill="#E0156B"/>
+            <polygon points="280,80 290,65 300,80" fill="#C9A84C"/>
+            <polygon points="310,80 320,65 330,80" fill="#E0156B"/>
+            <polygon points="340,80 350,65 360,80" fill="#C9A84C"/>
+            <polygon points="370,80 380,65 390,80" fill="#E0156B"/>
+            <polygon points="400,80 410,65 420,80" fill="#C9A84C"/>
 
-          <!-- BANDERINES TECHO -->
-          <path d="M200 57 L210 45 L220 57" fill="rgba(224,21,107,0.4)" stroke="rgba(224,21,107,0.6)" stroke-width="0.5"/>
-          <path d="M260 57 L270 45 L280 57" fill="rgba(201,168,76,0.4)" stroke="rgba(201,168,76,0.6)" stroke-width="0.5"/>
-          <path d="M320 57 L330 45 L340 57" fill="rgba(224,21,107,0.4)" stroke="rgba(224,21,107,0.6)" stroke-width="0.5"/>
-          <path d="M380 57 L390 45 L400 57" fill="rgba(201,168,76,0.4)" stroke="rgba(201,168,76,0.6)" stroke-width="0.5"/>
-          <path d="M440 57 L450 45 L460 57" fill="rgba(224,21,107,0.4)" stroke="rgba(224,21,107,0.6)" stroke-width="0.5"/>
+            <!-- ESCAPE HUMO TRASERO -->
+            <circle cx="40" cy="245" r="8" fill="rgba(255,255,255,0.05)" filter="url(#glow)"/>
+            <circle cx="25" cy="235" r="6" fill="rgba(255,255,255,0.03)"/>
+          </svg>
+        </div>
+      </div>
 
-          <!-- GENTE BAILANDO (siluetas simples en ventanas) -->
-          <ellipse cx="193" cy="170" rx="5" ry="7" fill="rgba(201,168,76,0.25)"/>
-          <circle cx="193" cy="163" r="4" fill="rgba(201,168,76,0.2)"/>
-          <ellipse cx="345" cy="170" rx="5" ry="7" fill="rgba(224,21,107,0.2)"/>
-          <circle cx="345" cy="163" r="4" fill="rgba(224,21,107,0.15)"/>
-
-          <!-- ESCAPE / HUMO (efecto festivo) -->
-          <circle cx="58" cy="250" r="8" fill="rgba(255,255,255,0.03)" filter="url(#glow)"/>
-          <circle cx="45" cy="240" r="6" fill="rgba(255,255,255,0.02)"/>
-        </svg>
+      <!-- LUCES LED ANIMADAS BAJO LA CHIVA -->
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <span class="led-light" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E0156B;box-shadow:0 0 12px #E0156B;animation:led 1.2s ease-in-out infinite 0s;"></span>
+        <span class="led-light" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C9A84C;box-shadow:0 0 12px #C9A84C;animation:led 1.2s ease-in-out infinite 0.15s;"></span>
+        <span class="led-light" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E0156B;box-shadow:0 0 12px #E0156B;animation:led 1.2s ease-in-out infinite 0.3s;"></span>
+        <span class="led-light" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C9A84C;box-shadow:0 0 12px #C9A84C;animation:led 1.2s ease-in-out infinite 0.45s;"></span>
+        <span class="led-light" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E0156B;box-shadow:0 0 12px #E0156B;animation:led 1.2s ease-in-out infinite 0.6s;"></span>
+        <span class="led-light" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C9A84C;box-shadow:0 0 12px #C9A84C;animation:led 1.2s ease-in-out infinite 0.75s;"></span>
+        <span class="led-light" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E0156B;box-shadow:0 0 12px #E0156B;animation:led 1.2s ease-in-out infinite 0.9s;"></span>
+        <span class="led-light" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C9A84C;box-shadow:0 0 12px #C9A84C;animation:led 1.2s ease-in-out infinite 1.05s;"></span>
       </div>
     </div>
-
-    <!-- LUCES LED ANIMADAS BAJO LA CHIVA -->
-    <div style="display:flex;gap:6px;margin-top:-16px;margin-bottom:32px;">
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E0156B;box-shadow:0 0 12px #E0156B;animation:led 1.2s ease-in-out infinite 0s;"></span>
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C9A84C;box-shadow:0 0 12px #C9A84C;animation:led 1.2s ease-in-out infinite 0.15s;"></span>
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E0156B;box-shadow:0 0 12px #E0156B;animation:led 1.2s ease-in-out infinite 0.3s;"></span>
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C9A84C;box-shadow:0 0 12px #C9A84C;animation:led 1.2s ease-in-out infinite 0.45s;"></span>
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E0156B;box-shadow:0 0 12px #E0156B;animation:led 1.2s ease-in-out infinite 0.6s;"></span>
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C9A84C;box-shadow:0 0 12px #C9A84C;animation:led 1.2s ease-in-out infinite 0.75s;"></span>
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E0156B;box-shadow:0 0 12px #E0156B;animation:led 1.2s ease-in-out infinite 0.9s;"></span>
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C9A84C;box-shadow:0 0 12px #C9A84C;animation:led 1.2s ease-in-out infinite 1.05s;"></span>
-    </div>
-    <style>@keyframes led{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.7)}}</style>
   </section>
 
   <div class="section-divider"><div class="divider-diamond"></div></div>
 
-  <!-- RUTA SECTION -->
+  <!-- RUTA SECTION (ACORDEÓN INTERACTIVO) -->
   <section class="ruta-section">
     <div class="ruta-title">
-      <div class="section-label">El itinerario</div>
-      <div class="section-title">La <em>Ruta</em> de la Noche</div>
+      <div class="section-label">Toca cada parada</div>
+      <div class="section-title">El <em>Itinerario</em></div>
     </div>
 
+    <!-- MAPA DE GOOGLE REAL INTEGRADO -->
     <div class="map-container">
       <div class="map-overlay-badge">Mapa del Recorrido</div>
       <iframe 
         src="https://maps.google.com/maps?saddr=Centro+Comercial+Plaza+de+las+Americas,+Bogotá&daddr=La+Calera,+Cundinamarca+to:Centro+Comercial+Plaza+de+las+Americas,+Bogotá&t=m&hl=es&output=embed" 
-        allowfullscreen="" 
-        loading="lazy" 
-        referrerpolicy="no-referrer-when-downgrade">
+        allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
       </iframe>
     </div>
 
     <div class="ruta-stops" id="ruta-stops">
-      <div class="stop-item">
+      <!-- Stop 1 (Abierto por defecto) -->
+      <div class="stop-item active" onclick="toggleAccordion(this)">
         <div class="stop-number">1</div>
         <div class="stop-content">
-          <div class="stop-name">Plaza de las Américas</div>
-          <div class="stop-desc">El punto de partida. Nos encontramos aquí para comenzar juntos la noche más épica del año. Prepárate para subirse.</div>
-          <div class="stop-time">Recogida · 6:00 PM</div>
+          <div class="stop-header">
+            <div class="stop-name">Plaza de las Américas</div>
+            <div class="stop-toggle-icon">▼</div>
+          </div>
+          <div class="stop-body">
+            <div class="stop-desc">El punto de partida. Nos encontramos aquí para comenzar juntos la noche más épica del año. Prepárate para subirte.</div>
+            <div class="stop-time">Recogida · 6:00 PM</div>
+          </div>
         </div>
       </div>
-      <div class="stop-item">
+      <!-- Stop 2 -->
+      <div class="stop-item" onclick="toggleAccordion(this)">
         <div class="stop-number">2</div>
         <div class="stop-content">
-          <div class="stop-name">Bogotá Nocturna</div>
-          <div class="stop-desc">El skyline de la ciudad como telón de fondo. Luces, movimiento, la energía de Bogotá en su versión más vibrante.</div>
-          <div class="stop-time">Salida · 7:30 PM</div>
+          <div class="stop-header">
+            <div class="stop-name">Bogotá Nocturna</div>
+            <div class="stop-toggle-icon">▼</div>
+          </div>
+          <div class="stop-body">
+            <div class="stop-desc">El skyline de la ciudad como telón de fondo. Luces, movimiento, la energía de Bogotá en su versión más vibrante.</div>
+            <div class="stop-time">Salida · 7:30 PM</div>
+          </div>
         </div>
       </div>
-      <div class="stop-item">
+      <!-- Stop 3 -->
+      <div class="stop-item" onclick="toggleAccordion(this)">
         <div class="stop-number">3</div>
         <div class="stop-content">
-          <div class="stop-name">La Calera</div>
-          <div class="stop-desc">Vista panorámica, aire de montaña y las luces de Bogotá a tus pies. Una pausa mágica en el recorrido.</div>
-          <div class="stop-time">Escapada nocturna</div>
+          <div class="stop-header">
+            <div class="stop-name">La Calera</div>
+            <div class="stop-toggle-icon">▼</div>
+          </div>
+          <div class="stop-body">
+            <div class="stop-desc">Vista panorámica, aire de montaña y las luces de Bogotá a tus pies. Una pausa mágica en el recorrido con el mejor mirador.</div>
+            <div class="stop-time">Escapada nocturna</div>
+          </div>
         </div>
       </div>
-      <div class="stop-item">
+      <!-- Stop 4 -->
+      <div class="stop-item" onclick="toggleAccordion(this)">
         <div class="stop-number">4</div>
         <div class="stop-content">
-          <div class="stop-name">Regreso a Bogotá</div>
-          <div class="stop-desc">La fiesta no termina. De vuelta a la ciudad, la rumba continúa sobre la chiva con música en vivo.</div>
-          <div class="stop-time">Regreso rumbeando</div>
+          <div class="stop-header">
+            <div class="stop-name">Regreso a Bogotá</div>
+            <div class="stop-toggle-icon">▼</div>
+          </div>
+          <div class="stop-body">
+            <div class="stop-desc">La fiesta no termina. De vuelta a la ciudad, la rumba continúa sobre la chiva con la mejor música a todo volumen.</div>
+            <div class="stop-time">Regreso rumbeando</div>
+          </div>
         </div>
       </div>
-      <div class="stop-item">
+      <!-- Stop 5 -->
+      <div class="stop-item" onclick="toggleAccordion(this)">
         <div class="stop-number">5</div>
         <div class="stop-content">
-          <div class="stop-name">Plaza de las Américas</div>
-          <div class="stop-desc">El capítulo cierra donde empezó. Recuerdos que duran toda la vida, exactamente como los 24 de Nat merecen.</div>
-          <div class="stop-time">Llegada · 11:30 PM</div>
+          <div class="stop-header">
+            <div class="stop-name">Plaza de las Américas</div>
+            <div class="stop-toggle-icon">▼</div>
+          </div>
+          <div class="stop-body">
+            <div class="stop-desc">El capítulo cierra donde empezó. Recuerdos que durarán toda la vida, exactamente como los 24 de Nat merecen ser celebrados.</div>
+            <div class="stop-time">Llegada · 11:30 PM</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1018,14 +991,14 @@
       </div>
       <div class="info-card">
         <span class="info-icon">👗</span>
-        <div class="info-label">Código de vestimenta</div>
+        <div class="info-label">Dress Code</div>
         <div class="info-value">Rumbero</div>
         <div class="info-sub">Glamour · Color · Actitud</div>
       </div>
       <div class="info-card">
         <span class="info-icon">👥</span>
         <div class="info-label">Acompañantes</div>
-        <div class="info-value">Previa notificación</div>
+        <div class="info-value">Previa aviso</div>
         <div class="info-sub">Cupos limitados</div>
       </div>
     </div>
@@ -1033,57 +1006,94 @@
 
   <div class="section-divider"><div class="divider-diamond"></div></div>
 
-  <!-- INCLUYE SECTION -->
+  <!-- INCLUYE SECTION (TARJETAS GIRATORIAS 3D) -->
   <section class="incluye-section">
-    <div class="section-label">Todo incluido</div>
+    <div class="section-label">Todo incluido (Toca las tarjetas)</div>
     <div class="section-title">Qué <em>Incluye</em></div>
     <div class="incluye-grid">
-      <div class="incluye-item">
-        <div class="incluye-icon">
-          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-            <path d="M8 36 Q8 30 16 28 L24 26 L32 28 Q40 30 40 36 L40 40 L8 40 Z" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
-            <rect x="12" y="18" width="24" height="10" rx="3" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
-            <circle cx="24" cy="12" r="5" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
-            <circle cx="18" cy="34" r="2" fill="#E0156B"/>
-            <circle cx="24" cy="35" r="2" fill="#C9A84C"/>
-            <circle cx="30" cy="34" r="2" fill="#E0156B"/>
-          </svg>
+      
+      <!-- Flip Card 1 -->
+      <div class="flip-card" onclick="this.classList.toggle('is-flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <div class="incluye-icon">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+                <path d="M8 36 Q8 30 16 28 L24 26 L32 28 Q40 30 40 36 L40 40 L8 40 Z" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                <rect x="12" y="18" width="24" height="10" rx="3" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                <circle cx="24" cy="12" r="5" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                <circle cx="18" cy="34" r="2" fill="#E0156B"/>
+                <circle cx="24" cy="35" r="2" fill="#C9A84C"/>
+                <circle cx="30" cy="34" r="2" fill="#E0156B"/>
+              </svg>
+            </div>
+            <div class="incluye-name">Transporte</div>
+          </div>
+          <div class="flip-card-back">
+            <div class="incluye-desc-back">La mejor ruta por la ciudad sin preocuparte por manejar. Te subes y disfrutas.</div>
+          </div>
         </div>
-        <div class="incluye-name">Transporte</div>
       </div>
-      <div class="incluye-item">
-        <div class="incluye-icon">
-          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-            <path d="M16 14 C16 14 14 26 18 32 C20 35 24 36 24 36 C24 36 28 35 30 32 C34 26 32 14 32 14 Z" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
-            <path d="M20 14 C20 14 24 10 28 14" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="24" y1="36" x2="24" y2="42" stroke="#C9A84C" stroke-width="1.5"/>
-            <line x1="18" y1="42" x2="30" y2="42" stroke="#C9A84C" stroke-width="1.5"/>
-            <circle cx="32" cy="18" r="2" fill="#E0156B"/>
-          </svg>
+
+      <!-- Flip Card 2 -->
+      <div class="flip-card" onclick="this.classList.toggle('is-flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <div class="incluye-icon">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+                <path d="M16 14 C16 14 14 26 18 32 C20 35 24 36 24 36 C24 36 28 35 30 32 C34 26 32 14 32 14 Z" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                <path d="M20 14 C20 14 24 10 28 14" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="24" y1="36" x2="24" y2="42" stroke="#C9A84C" stroke-width="1.5"/>
+                <line x1="18" y1="42" x2="30" y2="42" stroke="#C9A84C" stroke-width="1.5"/>
+                <circle cx="32" cy="18" r="2" fill="#E0156B"/>
+              </svg>
+            </div>
+            <div class="incluye-name">Trago</div>
+          </div>
+          <div class="flip-card-back">
+            <div class="incluye-desc-back">Brindis garantizado toda la noche para celebrar los 24 como se debe.</div>
+          </div>
         </div>
-        <div class="incluye-name">Trago</div>
       </div>
-      <div class="incluye-item">
-        <div class="incluye-icon">
-          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-            <ellipse cx="24" cy="26" rx="14" ry="10" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
-            <path d="M14 22 Q14 16 24 16 Q34 16 34 22" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
-            <line x1="24" y1="16" x2="24" y2="8" stroke="#C9A84C" stroke-width="1.5"/>
-            <circle cx="24" cy="8" r="3" fill="none" stroke="#E0156B" stroke-width="1.5"/>
-            <path d="M20 24 L24 22 L28 24" stroke="#E0156B" stroke-width="1.2" stroke-linecap="round"/>
-          </svg>
+
+      <!-- Flip Card 3 -->
+      <div class="flip-card" onclick="this.classList.toggle('is-flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <div class="incluye-icon">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+                <ellipse cx="24" cy="26" rx="14" ry="10" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                <path d="M14 22 Q14 16 24 16 Q34 16 34 22" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                <line x1="24" y1="16" x2="24" y2="8" stroke="#C9A84C" stroke-width="1.5"/>
+                <circle cx="24" cy="8" r="3" fill="none" stroke="#E0156B" stroke-width="1.5"/>
+                <path d="M20 24 L24 22 L28 24" stroke="#E0156B" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="incluye-name">Música</div>
+          </div>
+          <div class="flip-card-back">
+            <div class="incluye-desc-back">El playlist perfecto rodando por la ciudad para no sentarse en todo el viaje.</div>
+          </div>
         </div>
-        <div class="incluye-name">Música</div>
       </div>
-      <div class="incluye-item">
-        <div class="incluye-icon">
-          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-            <path d="M24 8 L28 18 L40 18 L30 25 L34 36 L24 29 L14 36 L18 25 L8 18 L20 18 Z" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
-            <circle cx="24" cy="24" r="4" fill="#E0156B" opacity="0.8"/>
-          </svg>
+
+      <!-- Flip Card 4 -->
+      <div class="flip-card" onclick="this.classList.toggle('is-flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <div class="incluye-icon">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+                <path d="M24 8 L28 18 L40 18 L30 25 L34 36 L24 29 L14 36 L18 25 L8 18 L20 18 Z" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                <circle cx="24" cy="24" r="4" fill="#E0156B" opacity="0.8"/>
+              </svg>
+            </div>
+            <div class="incluye-name">Rumba Segura</div>
+          </div>
+          <div class="flip-card-back">
+            <div class="incluye-desc-back">Tú solo preocúpate por gozar, cantar y celebrar. Del resto nos encargamos.</div>
+          </div>
         </div>
-        <div class="incluye-name">Rumba Segura</div>
       </div>
+      
     </div>
   </section>
 
@@ -1125,58 +1135,51 @@
     <div class="section-label">Faltan</div>
     <div class="section-title">Cuenta <em>Regresiva</em></div>
     <div class="countdown-grid">
-      <div class="cd-item">
-        <div class="cd-number" id="cd-days">00</div>
-        <div class="cd-label">Días</div>
-      </div>
-      <div class="cd-sep">:</div>
-      <div class="cd-item">
-        <div class="cd-number" id="cd-hours">00</div>
-        <div class="cd-label">Horas</div>
-      </div>
-      <div class="cd-sep">:</div>
-      <div class="cd-item">
-        <div class="cd-number" id="cd-mins">00</div>
-        <div class="cd-label">Minutos</div>
-      </div>
-      <div class="cd-sep">:</div>
-      <div class="cd-item">
-        <div class="cd-number" id="cd-secs">00</div>
-        <div class="cd-label">Segundos</div>
-      </div>
+      <div class="cd-item"><div class="cd-number" id="cd-days">00</div><div class="cd-label">Días</div></div><div class="cd-sep">:</div>
+      <div class="cd-item"><div class="cd-number" id="cd-hours">00</div><div class="cd-label">Horas</div></div><div class="cd-sep">:</div>
+      <div class="cd-item"><div class="cd-number" id="cd-mins">00</div><div class="cd-label">Minutos</div></div><div class="cd-sep">:</div>
+      <div class="cd-item"><div class="cd-number" id="cd-secs">00</div><div class="cd-label">Segundos</div></div>
     </div>
   </section>
 
   <div class="section-divider"><div class="divider-diamond"></div></div>
 
-  <!-- PAGO SECTION -->
+  <!-- PAGO SECTION (EFECTO TILT 3D) -->
   <section class="pago-section">
     <div style="text-align:center;margin-bottom:48px;">
       <div class="section-label">Reserva tu cupo</div>
-      <div class="section-title">El <em>Pago</em></div>
+      <div class="section-title">El <em>Pase VIP</em></div>
     </div>
-    <div class="pago-card">
-      <div class="section-label" style="margin:0 0 8px;">Valor por persona</div>
-      <div class="pago-amount">$50K</div>
-      <div class="pago-currency">Pesos colombianos</div>
+    
+    <div class="pago-card-wrapper" id="tilt-wrapper">
+      <div class="pago-card" id="tilt-card">
+        <div class="pago-content-3d">
+          <div class="section-label" style="margin:0 0 8px;">Valor por persona</div>
+          <div class="pago-amount">$50K</div>
+          <div class="pago-currency">Pesos colombianos</div>
 
-      <div class="pago-row">
-        <span class="pago-row-label">Fecha límite</span>
-        <span class="pago-row-value">10 · Jul · 2026</span>
-      </div>
-      <div class="pago-row">
-        <span class="pago-row-label">Método</span>
-        <span class="pago-row-value">Nequi</span>
-      </div>
-      <div class="pago-row" style="border-bottom:none;">
-        <span class="pago-row-label">Incluye</span>
-        <span class="pago-row-value">Todo el plan</span>
-      </div>
+          <div class="pago-row">
+            <span class="pago-row-label">Fecha límite</span>
+            <span class="pago-row-value">10 · Jul · 2026</span>
+          </div>
+          <div class="pago-row">
+            <span class="pago-row-label">Método</span>
+            <span class="pago-row-value">Nequi</span>
+          </div>
+          <div class="pago-row" style="border-bottom:none;">
+            <span class="pago-row-label">Incluye</span>
+            <span class="pago-row-value">Todo el plan</span>
+          </div>
 
-      <div class="pago-nequi">
-        <div class="tag">Número Nequi</div>
-        <div class="num">310 234 1645</div>
+          <div class="pago-nequi">
+            <div class="tag">Número Nequi</div>
+            <div class="num">310 234 1645</div>
+          </div>
+        </div>
       </div>
+    </div>
+    <div style="font-size:9px; letter-spacing:3px; color:rgba(201,168,76,0.5); text-transform:uppercase; margin-top:20px;">
+      (Mueve tu pase vip interactivo)
     </div>
   </section>
 
@@ -1192,27 +1195,16 @@
       <div class="qr-card">
         <div class="qr-box">
           <div class="qr-inner">
-            <!-- QR Real generado por API -->
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://wa.me/573102341645?text=Hola%20Nat!%20Confirmo%20mi%20asistencia%20a%20La%20Ruta%20de%20Nat%2024%20%F0%9F%9A%8C%E2%9C%A8" alt="QR Code de Confirmación" style="width: 100%; height: 100%; object-fit: contain;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://wa.me/573102341645?text=%F0%9F%A5%B3%F0%9F%8E%89%20Hola%20Nat!%20Confirmo%20mi%20asistencia%20a%20La%20Ruta%20de%20Nat%2024!" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;">
           </div>
         </div>
         <div class="card-title">Código QR</div>
-        <div class="card-desc">Escanea para confirmar asistencia, ver ubicación en Maps e información completa del evento.</div>
+        <div class="card-desc">Escanea con otro celular para confirmar tu asistencia rápido por WhatsApp.</div>
       </div>
       <div class="nfc-card">
-        <div class="nfc-wave">
-          <div class="nfc-center">📡</div>
-        </div>
+        <div class="nfc-wave"><div class="nfc-center">📡</div></div>
         <div class="card-title">Chip NFC</div>
-        <div class="card-desc">Acerca tu celular a la invitación física para acceder al RSVP, mapa y detalles del evento de forma instantánea.</div>
-        <div style="margin-top:20px;padding:12px;border:1px solid rgba(224,21,107,0.2);background:rgba(224,21,107,0.04);">
-          <div style="font-size:8px;letter-spacing:3px;text-transform:uppercase;color:rgba(224,21,107,0.6);margin-bottom:4px;">Funciones NFC</div>
-          <div style="font-size:11px;color:rgba(248,240,227,0.5);line-height:1.8;">
-            → Confirmar asistencia<br>
-            → Google Maps directo<br>
-            → Info del evento
-          </div>
-        </div>
+        <div class="card-desc">Acerca tu celular a la invitación física para acceder a esta experiencia al instante.</div>
       </div>
     </div>
   </section>
@@ -1239,76 +1231,80 @@
   <div class="modal-inner">
     <button class="modal-close" onclick="closeRSVP()">✕</button>
     <div class="modal-title">Confirmar</div>
-    <div class="modal-sub">¡Ya casi estás en la chiva!</div>
+    <div class="modal-sub">Completa los datos para tu mensaje</div>
 
     <div class="form-group">
       <label class="form-label">Tu nombre</label>
-      <input class="form-input" type="text" placeholder="¿Cómo te llamas?">
+      <input class="form-input" type="text" id="wa-name" placeholder="Ej. Juan Pérez">
+    </div>
+    <div class="form-group">
+      <label class="form-label">¿Vas a ir?</label>
+      <select class="form-input" id="wa-attendance" style="appearance: auto; background-color: rgba(201,168,76,0.04);">
+        <option value="Sí, confirmo asistencia">Sí, confirmo asistencia</option>
+        <option value="Lamentablemente no podré ir">Lamentablemente no podré ir</option>
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">¿Llevas acompañante?</label>
-      <input class="form-input" type="text" placeholder="Nombre del acompañante (opcional)">
+      <input class="form-input" type="text" id="wa-companion" placeholder="Nombre de tu +1 (o déjalo vacío)">
     </div>
-    <div class="form-group">
-      <label class="form-label">WhatsApp</label>
-      <input class="form-input" type="tel" placeholder="Para enviarte detalles">
-    </div>
-    <button class="btn-submit" onclick="submitRSVP()">✦ Confirmar Asistencia</button>
+    <button class="btn-submit" onclick="sendWhatsApp()">✦ Enviar por WhatsApp</button>
   </div>
 </div>
 
 <script>
-// ─── OVERLAY ───────────────────────────────────────────
-document.getElementById('overlay').addEventListener('click', function() {
-  this.classList.add('fade-out');
-  setTimeout(() => {
-    this.style.display = 'none';
-    document.getElementById('content').classList.add('visible');
-  }, 1200);
-});
+// ─── LÓGICA DE PARTÍCULAS INTERACTIVAS ─────────────────
+let particles = [];
+let partyModeBurst = false;
 
-// ─── PARTICLES ─────────────────────────────────────────
 (function() {
   const canvas = document.getElementById('particles');
   const ctx = canvas.getContext('2d');
-  let particles = [];
 
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
 
   class Particle {
-    constructor() { this.reset(); }
-    reset() {
-      this.x = Math.random() * canvas.width;
-      this.y = Math.random() * canvas.height;
-      this.size = Math.random() * 1.5 + 0.3;
-      this.speedX = (Math.random() - 0.5) * 0.3;
-      this.speedY = -Math.random() * 0.4 - 0.1;
-      this.opacity = Math.random() * 0.5 + 0.1;
+    constructor(isBurst = false) { this.reset(isBurst); }
+    reset(isBurst = false) {
+      this.x = isBurst ? (window.innerWidth / 2) + (Math.random() * 200 - 100) : Math.random() * canvas.width;
+      this.y = isBurst ? (window.innerHeight / 2) + 100 : Math.random() * canvas.height;
+      this.size = Math.random() * 1.5 + 0.5;
+      
+      if(isBurst) {
+        this.speedX = (Math.random() - 0.5) * 6;
+        this.speedY = (Math.random() - 0.5) * 6;
+        this.opacity = 1;
+      } else {
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = -Math.random() * 0.4 - 0.1;
+        this.opacity = Math.random() * 0.5 + 0.1;
+      }
+      
       this.color = Math.random() > 0.6 ? '#C9A84C' : Math.random() > 0.5 ? '#E0156B' : '#F8F0E3';
     }
     update() {
       this.x += this.speedX; this.y += this.speedY;
-      this.opacity -= 0.001;
-      if (this.opacity <= 0 || this.y < -10) this.reset();
+      this.opacity -= 0.005;
+      if (this.opacity <= 0 || this.y < -10 || this.x < -10 || this.x > canvas.width) this.reset();
     }
     draw() {
       ctx.save();
-      ctx.globalAlpha = this.opacity;
+      ctx.globalAlpha = Math.max(0, this.opacity);
       ctx.fillStyle = this.color;
-      ctx.shadowBlur = 6; ctx.shadowColor = this.color;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.shadowBlur = 8; ctx.shadowColor = this.color;
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
   }
 
-  for (let i = 0; i < 120; i++) particles.push(new Particle());
+  for (let i = 0; i < 100; i++) particles.push(new Particle());
+
+  // Función exportada para crear explosión
+  window.triggerParticleBurst = function() {
+    for (let i = 0; i < 50; i++) particles.push(new Particle(true));
+    setTimeout(() => { particles.splice(100); }, 3000); // limpiar extras
+  };
 
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1318,13 +1314,62 @@ document.getElementById('overlay').addEventListener('click', function() {
   animate();
 })();
 
-// ─── INTERSECTION OBSERVER (scroll reveal) ─────────────
-const obs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) e.target.classList.add('visible');
-  });
-}, { threshold: 0.15 });
+// ─── INTERACCIÓN 1: LA CHIVA (PARTY MODE) ──────────────
+document.getElementById('interactive-chiva').addEventListener('click', function() {
+  this.classList.toggle('party-mode');
+  if (this.classList.contains('party-mode')) {
+    window.triggerParticleBurst();
+  }
+});
 
+// ─── INTERACCIÓN 2: ACORDEÓN DE RUTAS ──────────────────
+function toggleAccordion(element) {
+  const allStops = document.querySelectorAll('.stop-item');
+  // Si ya está activa, la cerramos
+  if (element.classList.contains('active')) {
+    element.classList.remove('active');
+    return;
+  }
+  // Cerramos todas y abrimos la seleccionada
+  allStops.forEach(stop => stop.classList.remove('active'));
+  element.classList.add('active');
+}
+
+// ─── INTERACCIÓN 3: EFECTO TILT EN PASE VIP ────────────
+const tiltWrapper = document.getElementById('tilt-wrapper');
+const tiltCard = document.getElementById('tilt-card');
+
+tiltWrapper.addEventListener('mousemove', (e) => {
+  const rect = tiltWrapper.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+  
+  const rotateX = ((y - centerY) / centerY) * -15; // Max rotación 15 grados
+  const rotateY = ((x - centerX) / centerX) * 15;
+  
+  tiltCard.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+});
+
+tiltWrapper.addEventListener('mouseleave', () => {
+  tiltCard.style.transform = `rotateX(0deg) rotateY(0deg)`;
+});
+
+// ─── OVERLAY INICIAL ───────────────────────────────────
+document.getElementById('overlay').addEventListener('click', function() {
+  this.classList.add('fade-out');
+  setTimeout(() => {
+    this.style.display = 'none';
+    document.getElementById('content').classList.add('visible');
+  }, 1200);
+});
+
+// ─── SCROLL REVEAL ─────────────────────────────────────
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15 });
 document.querySelectorAll('.stop-item').forEach(el => obs.observe(el));
 
 // ─── COUNTDOWN ─────────────────────────────────────────
@@ -1332,13 +1377,7 @@ function updateCountdown() {
   const target = new Date('2026-07-11T18:00:00-05:00');
   const now = new Date();
   const diff = target - now;
-  if (diff <= 0) {
-    document.getElementById('cd-days').textContent = '00';
-    document.getElementById('cd-hours').textContent = '00';
-    document.getElementById('cd-mins').textContent = '00';
-    document.getElementById('cd-secs').textContent = '00';
-    return;
-  }
+  if (diff <= 0) return;
   const d = Math.floor(diff / 86400000);
   const h = Math.floor((diff % 86400000) / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
@@ -1348,52 +1387,45 @@ function updateCountdown() {
   document.getElementById('cd-mins').textContent = String(m).padStart(2,'0');
   document.getElementById('cd-secs').textContent = String(s).padStart(2,'0');
 }
-updateCountdown();
-setInterval(updateCountdown, 1000);
+updateCountdown(); setInterval(updateCountdown, 1000);
 
 // ─── LIBRO EASTER EGG ──────────────────────────────────
 function toggleLibro() {
   const card = document.getElementById('libro-card');
-  const hidden = document.getElementById('libro-hidden');
   const tap = document.getElementById('libro-tap');
   card.classList.toggle('open');
-  if (card.classList.contains('open')) {
-    tap.textContent = '✦ cerrar';
+  tap.textContent = card.classList.contains('open') ? '✦ cerrar' : '✦ toca para leer más';
+}
+
+// ─── RSVP Y WHATSAPP ───────────────────────────────────
+function openRSVP() { document.getElementById('rsvp-modal').classList.add('open'); }
+function closeRSVP() { document.getElementById('rsvp-modal').classList.remove('open'); }
+
+function sendWhatsApp() {
+  const name = document.getElementById('wa-name').value.trim() || 'Un invitado';
+  const attendance = document.getElementById('wa-attendance').value;
+  const companion = document.getElementById('wa-companion').value.trim();
+
+  // Armamos el texto exacto con la estructura solicitada, SIN emojis
+  let baseMessage = "Hola Nat!\n";
+  baseMessage += "Te escribo sobre La Ruta de Nat 24.\n\n";
+  baseMessage += "*Mi nombre es:* " + name + "\n";
+  baseMessage += "*Estatus:* " + attendance;
+  
+  if (companion) {
+    baseMessage += "\n*Mi acompañante es:* " + companion;
   } else {
-    tap.textContent = '✦ toca para leer más';
+    baseMessage += "\n*Mi acompañante es:* Voy sin acompañante";
   }
+
+  const encodedMessage = encodeURIComponent(baseMessage);
+  
+  window.open(`https://wa.me/573102341645?text=${encodedMessage}`, '_blank');
+  closeRSVP();
 }
 
-// ─── RSVP MODAL ────────────────────────────────────────
-function openRSVP() {
-  document.getElementById('rsvp-modal').classList.add('open');
-}
-function closeRSVP() {
-  document.getElementById('rsvp-modal').classList.remove('open');
-}
-function submitRSVP() {
-  const modal = document.getElementById('rsvp-modal');
-  modal.querySelector('.modal-inner').innerHTML = `
-    <div style="text-align:center;padding:20px 0;">
-      <div style="font-size:40px;margin-bottom:20px;">🎉</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:28px;color:#F8F0E3;margin-bottom:12px;">¡Listo!</div>
-      <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,0.7);margin-bottom:24px;">Ya estás en la chiva</div>
-      <div style="font-size:13px;color:rgba(248,240,227,0.5);line-height:1.7;margin-bottom:32px;">
-        Recuerda pagar antes del<br>
-        <strong style="color:#C9A84C;">10 de Julio · Nequi 310 234 1645</strong>
-      </div>
-      <button onclick="closeRSVP()" style="border:1px solid rgba(201,168,76,0.4);padding:14px 32px;background:none;color:#C9A84C;font-family:'Montserrat',sans-serif;font-size:9px;letter-spacing:4px;text-transform:uppercase;cursor:pointer;">Cerrar</button>
-    </div>
-  `;
-}
-
-// ─── ESC CLOSE MODAL ───────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeRSVP();
-});
-document.getElementById('rsvp-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeRSVP();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRSVP(); });
+document.getElementById('rsvp-modal').addEventListener('click', function(e) { if (e.target === this) closeRSVP(); });
 </script>
 </body>
 </html>
